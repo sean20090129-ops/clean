@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>綠色系宿舍抽籤系統</title>
+    <title>中興男宿抽掃區系統</title>
     <style>
         :root { 
-            --primary-green: #2d6a4f; /* 深森林綠 */
-            --light-green: #d8f3dc;   /* 淺綠背景 */
-            --accent-green: #52b788;  /* 亮綠色 */
-            --success-bg: #b7e4c7;    /* 完成後的背景 */
+            --primary-green: #2d6a4f; 
+            --light-green: #d8f3dc;   
+            --accent-green: #52b788;  
+            --success-bg: #b7e4c7;    
             --text-color: #1b4332;
         }
         body { font-family: "PingFang TC", sans-serif; background: var(--light-green); display: flex; justify-content: center; padding: 20px; color: var(--text-color); }
-        .card { width: 100%; max-width: 600px; background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(27, 67, 50, 0.15); position: relative; }
+        .card { width: 100%; max-width: 600px; background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(27, 67, 50, 0.15); position: relative; min-height: 400px; }
         
         /* 齒輪 */
-        .settings-btn { position: absolute; top: 25px; right: 25px; font-size: 24px; cursor: pointer; color: #95d5b2; transition: 0.3s; }
+        .settings-btn { position: absolute; top: 25px; right: 25px; font-size: 24px; cursor: pointer; color: #95d5b2; transition: 0.3s; z-index: 10; }
         .settings-btn:hover { transform: rotate(90deg); color: var(--primary-green); }
 
         h2 { text-align: center; color: var(--primary-green); margin-bottom: 5px; }
@@ -29,61 +29,73 @@
             text-align: center; transition: all 0.3s ease; cursor: pointer; position: relative;
         }
         .dorm-box:hover { border-color: var(--accent-green); background: #f7fffb; transform: scale(1.03); }
-        
-        /* 抽完後的樣式 */
-        .dorm-box.drawn { background: var(--success-bg); border-color: var(--accent-green); cursor: default; transform: none; box-shadow: inset 0 0 10px rgba(0,0,0,0.02); }
+        .dorm-box.drawn { background: var(--success-bg); border-color: var(--accent-green); cursor: default; transform: none; }
         
         .dorm-name { font-weight: bold; display: block; margin-bottom: 8px; font-size: 18px; }
         .result-text { font-weight: 800; font-size: 16px; color: var(--primary-green); margin: 5px 0; }
         .status-tag { font-size: 11px; color: #95d5b2; text-transform: uppercase; letter-spacing: 1px; }
-        .drawn .status-tag { color: var(--primary-green); }
 
-        /* 彈窗設計 */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(27, 67, 50, 0.6); z-index: 100; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+        /* 彈窗 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(27, 67, 50, 0.7); z-index: 100; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal-content { background: white; width: 90%; max-width: 400px; padding: 30px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
-        textarea { width: 100%; height: 100px; margin: 10px 0; padding: 12px; border: 2px solid #d8f3dc; border-radius: 12px; box-sizing: border-box; font-size: 14px; outline: none; }
-        textarea:focus { border-color: var(--accent-green); }
-        .save-btn { width: 100%; padding: 14px; background: var(--primary-green); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-top: 15px; }
-
-        .reset-btn { background: none; border: none; color: #74c69d; cursor: pointer; text-decoration: none; font-size: 13px; margin-top: 40px; display: block; width: 100%; text-align: center; }
-        .reset-btn:hover { color: var(--primary-green); }
+        textarea { width: 100%; height: 80px; margin: 10px 0; padding: 12px; border: 2px solid #d8f3dc; border-radius: 12px; box-sizing: border-box; font-size: 14px; outline: none; }
+        
+        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .save-btn { padding: 14px; background: var(--primary-green); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; }
+        .reset-action-btn { padding: 10px; background: #fff; color: #e74c3c; border: 1px solid #e74c3c; border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: bold; }
+        .reset-action-btn:hover { background: #fdf2f2; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <div class="settings-btn" onclick="toggleModal()">⚙️</div>
+        <div class="settings-btn" onclick="checkPassword()">⚙️</div>
         <h2>🌿 宿舍掃區分配</h2>
-        <p class="description">點擊下方卡片抽取</p>
+        <p class="description">請點擊下方卡片抽取本週任務</p>
         
         <div id="dormGrid" class="dorm-grid"></div>
-
-        <button class="reset-btn" onclick="initApp()">🔄 重置抽籤進度</button>
     </div>
 
     <div id="settingsModal" class="modal">
         <div class="modal-content">
-            <h3 style="margin-top:0; color: var(--primary-green);">⚙️ 設定名單</h3>
-            <label style="font-weight:bold;">🛌 寢室清單</label>
+            <h3 style="margin:0 0 15px 0; color: var(--primary-green);">⚙️ 管理員設定</h3>
+            <label style="font-size: 14px; font-weight:bold;">🛌 寢室清單</label>
             <textarea id="dormsInput"></textarea>
             
-            <label style="font-weight:bold;">🏛️ 公共掃區</label>
+            <label style="font-size: 14px; font-weight:bold;">🏛️ 公共掃區</label>
             <textarea id="zonesInput"></textarea>
             
-            <button class="save-btn" onclick="saveAndRefresh()">儲存並開啟新回合</button>
+            <div class="btn-group">
+                <button class="save-btn" onclick="saveAndRefresh()">儲存並重新分配</button>
+                <button class="reset-action-btn" onclick="confirmReset()">🔄 清空進度 (保持目前分配)</button>
+            </div>
+            <p style="text-align:center; font-size:12px; color:#999; margin-top:15px; cursor:pointer;" onclick="toggleModal()">取消關閉</p>
         </div>
     </div>
 
 <script>
+    // --- 設定區 ---
+    const ADMIN_PASSWORD = "312"; // 你可以在這裡更改密碼
+    // --------------
+
     let assignments = {};
 
     window.onload = function() {
         if (!localStorage.getItem('dorm_list')) {
-            localStorage.setItem('dorm_list', "301\n302\n303\n304\n305\n306");
-            localStorage.setItem('zone_list', "廁所\n浴室\n走廊\n曬衣場");
+            localStorage.setItem('dorm_list', "301\n302\n303\n304\n305");
+            localStorage.setItem('zone_list', "廁所\n浴室\n垃圾場");
         }
         initApp();
     };
+
+    function checkPassword() {
+        const pass = prompt("請輸入管理員密碼以進入設定：");
+        if (pass === ADMIN_PASSWORD) {
+            toggleModal();
+        } else if (pass !== null) {
+            alert("密碼錯誤，拒絕存取！");
+        }
+    }
 
     function toggleModal() {
         document.getElementById('dormsInput').value = localStorage.getItem('dorm_list');
@@ -95,25 +107,27 @@
     function saveAndRefresh() {
         localStorage.setItem('dorm_list', document.getElementById('dormsInput').value);
         localStorage.setItem('zone_list', document.getElementById('zonesInput').value);
+        alert("設定已儲存，將重新產生隨機分配結果！");
         toggleModal();
         initApp();
+    }
+
+    function confirmReset() {
+        if(confirm("確定要清空目前的抽籤進度嗎？(這會讓所有格子變回未抽取狀態，但分配結果不變)")) {
+            initApp();
+            toggleModal();
+        }
     }
 
     function initApp() {
         const dorms = localStorage.getItem('dorm_list').trim().split('\n').filter(d => d.trim() !== "");
         const zones = localStorage.getItem('zone_list').trim().split('\n').filter(z => z.trim() !== "");
         
-        // 確保不重複的關鍵：先準備好完整池子
         let pool = [...zones];
-        while (pool.length < dorms.length) {
-            pool.push("✨ 自主清潔");
-        }
-        // 如果掃區多於寢室，則截斷掃區（或者你可以改成一人掃多區）
-        if (pool.length > dorms.length) {
-            pool = pool.slice(0, dorms.length);
-        }
+        while (pool.length < dorms.length) pool.push("✨ 自主清潔");
+        if (pool.length > dorms.length) pool = pool.slice(0, dorms.length);
         
-        // Fisher-Yates 洗牌
+        // Fisher-Yates Shuffle
         for (let i = pool.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -143,19 +157,16 @@
     function reveal(dorm) {
         const box = document.getElementById(`dorm-${dorm}`);
         const text = document.getElementById(`res-${dorm}`);
-        const tag = box.querySelector('.status-tag');
-        
         if (box.classList.contains('drawn')) return;
 
         text.innerText = "抽取中...";
         setTimeout(() => {
             text.innerText = assignments[dorm];
             box.classList.add('drawn');
-            tag.innerText = "Confirmed";
+            box.querySelector('.status-tag').innerText = "Confirmed";
         }, 400);
     }
 </script>
 
 </body>
-
 </html>
