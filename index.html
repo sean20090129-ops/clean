@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>5j/ 中興男宿掃區分配抽籤</title>
+<title>中興男宿掃區分配抽籤</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f3ff;min-height:100vh;display:flex;justify-content:center;padding:32px 16px}
@@ -71,7 +71,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
   </div>
   <div class="grid" id="grid"></div>
   <div class="actions">
-    <button class="btn" onclick="initApp()">重置</button>
+    <button class="btn" onclick="confirmReset()">重置</button>
     <a id="exportBtn" class="btn btn-export" style="opacity:.4;pointer-events:none">
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10v2h10v-2M7 2v7M4 6l3 3 3-3" stroke="#EAF3DE" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
       匯出 Excel
@@ -82,12 +82,32 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 </div>
  
 <div id="toast" class="toast"></div>
+<div class="modal-bg" id="resetPwdBg" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <h3>確認重置</h3>
+    <p style="font-size:13px;color:#888;margin-bottom:12px">請輸入密碼以重置抽籤進度</p>
+    <input id="resetPwdInput" type="password" placeholder="密碼" style="width:100%;padding:9px 12px;font-size:14px;border-radius:8px;border:0.5px solid #ddd;background:#f9f9f9;color:#1a1a2e;outline:none;font-family:inherit;margin-bottom:8px" onkeydown="if(event.key==='Enter')checkResetPwd()">
+    <div id="resetPwdErr" style="font-size:12px;color:#E24B4A;min-height:18px;margin-bottom:8px"></div>
+    <button class="btn-save" onclick="checkResetPwd()">確認重置</button>
+  </div>
+</div>
+ 
 <div class="modal-bg" id="pwdBg" onclick="pwdBgClick(event)">
   <div class="modal">
     <h3>請輸入密碼</h3>
     <input id="pwdInput" type="password" placeholder="密碼" style="width:100%;padding:9px 12px;font-size:14px;border-radius:8px;border:0.5px solid #ddd;background:#f9f9f9;color:#1a1a2e;outline:none;font-family:inherit;margin-bottom:8px" onkeydown="if(event.key==='Enter')checkPwd()">
     <div id="pwdErr" style="font-size:12px;color:#E24B4A;min-height:18px;margin-bottom:8px"></div>
     <button class="btn-save" onclick="checkPwd()">確認</button>
+  </div>
+</div>
+ 
+<div class="modal-bg" id="resetPwdBg" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <h3>確認重置</h3>
+    <p style="font-size:13px;color:#888;margin-bottom:12px">請輸入密碼以重置抽籤進度</p>
+    <input id="resetPwdInput" type="password" placeholder="密碼" style="width:100%;padding:9px 12px;font-size:14px;border-radius:8px;border:0.5px solid #ddd;background:#f9f9f9;color:#1a1a2e;outline:none;font-family:inherit;margin-bottom:8px" onkeydown="if(event.key==='Enter')checkResetPwd()">
+    <div id="resetPwdErr" style="font-size:12px;color:#E24B4A;min-height:18px;margin-bottom:8px"></div>
+    <button class="btn-save" onclick="checkResetPwd()">確認重置</button>
   </div>
 </div>
  
@@ -112,7 +132,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;backgrou
 </div>
  
 <script>
-let assignments={},drawn=0,total=0,busy=false,results=[];
+let remainingPool=[],drawn=0,total=0,busy=false,results=[];
 function ld(k,d){try{return localStorage.getItem(k)||d}catch{return d}}
 function sv(k,v){try{localStorage.setItem(k,v)}catch{}}
  
@@ -120,14 +140,14 @@ function initApp(){
   drawn=0;busy=false;results=[];
   const btn=document.getElementById('exportBtn');
   btn.style.opacity='.4';btn.style.pointerEvents='none';btn.removeAttribute('href');btn.removeAttribute('download');
-  const dorms=ld('d_dorms',"301\n302\n303\n304\n305\n306").trim().split('\n').filter(x=>x.trim());
-  const zones=ld('d_zones',"廁所\n浴室\n走廊\n曬衣場").trim().split('\n').filter(x=>x.trim());
+  const dorms=ld('d_dorms',"301\n302\n303\n304\n307\n308\n309\n310\n311\n312\n401\n402\n403\n404\n408").trim().split('\n').filter(x=>x.trim());
+  const zones=ld('d_zones',"垃圾\n垃圾\n2樓 洗衣場+晒衣場\n3樓 洗衣場+晒衣場\n4樓 洗衣場+晒衣場\n2樓 廁所\n3樓 廁所\n4樓 廁所\n2樓 浴室\n3樓 浴室\n4樓 浴室\n2樓 琉理台+走廊+飲水機\n3樓 琉理台+走廊+飲水機\n4樓 琉理台+走廊+飲水機\n2.4樓冰箱").trim().split('\n').filter(x=>x.trim());
   total=dorms.length;
   let pool=[...zones];
   while(pool.length<dorms.length)pool.push("自主清潔");
   pool=pool.slice(0,dorms.length);
   for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
-  assignments={};dorms.forEach((d,i)=>assignments[d]=pool[i]);
+  remainingPool=[...pool];
   const pe=document.getElementById('zonesPool');pe.innerHTML='';
   pool.forEach(z=>{const t=document.createElement('span');t.className='zone-tag';t.textContent=z;t.dataset.zone=z;pe.appendChild(t);});
   const g=document.getElementById('grid');g.innerHTML='';
@@ -148,21 +168,59 @@ function reveal(dorm){
   busy=true;box.classList.add('locked');
   document.getElementById('st-'+dorm).textContent='命運轉動中';
   document.getElementById('res-'+dorm).textContent='';
-  const zone=assignments[dorm];
-  const avail=getAvailTags();
+  // 點擊當下才隨機從剩餘 pool 抽一個，真正隨機
+  const pickIdx=Math.floor(Math.random()*remainingPool.length);
+  const zone=remainingPool[pickIdx];
+  remainingPool.splice(pickIdx,1);
+ 
+  const allTags=Array.from(document.querySelectorAll('#zonesPool .zone-tag'));
+  const avail=Array.from(document.querySelectorAll('#zonesPool .zone-tag:not(.used)'));
   if(!avail.length){finish(dorm,zone);return;}
   const winnerTag=avail.find(t=>t.dataset.zone===zone)||avail[0];
-  const STEPS=22+Math.floor(Math.random()*8);
+  const pool=allTags.length>=2?allTags:avail;
+  const wi=pool.indexOf(winnerTag);
+ 
+  // 快速階段：完全隨機跳，不重複相鄰
+  const FAST=20+Math.floor(Math.random()*10);
   let steps=[];
-  for(let i=0;i<STEPS-avail.length;i++)steps.push(avail[Math.floor(Math.random()*avail.length)]);
-  const wi=avail.indexOf(winnerTag);
-  for(let i=0;i<avail.length;i++)steps.push(avail[(wi+i)%avail.length]);
-  const delays=steps.map((_,i)=>{const r=i/steps.length;return r<.35?55:r<.6?90:r<.78?145:r<.9?210:280;});
+  for(let i=0;i<FAST;i++){
+    let idx;
+    do{idx=Math.floor(Math.random()*pool.length);}
+    while(steps.length>0&&pool[idx]===steps[steps.length-1]);
+    steps.push(pool[idx]);
+  }
+ 
+  // 減速階段：從目前位置「順序」往後走，走到 winner 為止
+  // 隨機決定要多繞幾圈（0~2圈）再停，讓每次停的節奏不同
+  const lastIdx=pool.indexOf(steps[steps.length-1]);
+  const extraLaps=Math.floor(Math.random()*2); // 0或1圈
+  const extraOffset=Math.floor(Math.random()*pool.length); // 圈內隨機偏移
+  const totalSlow=((wi-lastIdx+pool.length)%pool.length)||pool.length; // 至少走完一輪
+  const slowSteps=totalSlow + extraLaps*pool.length + extraOffset - (extraOffset>0?(pool.length - ((wi-lastIdx+pool.length)%pool.length||pool.length)):0);
+ 
+  // 重新計算：從 lastIdx 出發，走 N 步剛好到 wi
+  const distToWinner=((wi-lastIdx+pool.length)%pool.length)||pool.length;
+  const totalSlowSteps=distToWinner + (1+Math.floor(Math.random()*2))*pool.length + Math.floor(Math.random()*pool.length);
+ 
+  for(let i=1;i<=totalSlowSteps;i++){
+    steps.push(pool[(lastIdx+i)%pool.length]);
+  }
+ 
+  const delays=steps.map((_,i)=>{
+    const r=i/steps.length;
+    return r<.35?50:r<.58?88:r<.72?135:r<.84?195:r<.92?270:r<.97?340:400;
+  });
+ 
   let cur=-1;
   function step(i){
     if(cur>=0&&steps[cur])steps[cur].classList.remove('hl','winner');
-    if(i>=steps.length){winnerTag.classList.add('winner');setTimeout(()=>flyToBox(dorm,zone,winnerTag),600);return;}
-    cur=i;steps[i].classList.add('hl');setTimeout(()=>step(i+1),delays[i]);
+    if(i>=steps.length){
+      winnerTag.classList.add('winner');
+      setTimeout(()=>flyToBox(dorm,zone,winnerTag),600);
+      return;
+    }
+    cur=i;steps[i].classList.add('hl');
+    setTimeout(()=>step(i+1),delays[i]);
   }
   step(0);
 }
@@ -216,7 +274,9 @@ function activateExport(){
   const zoneCounts={};
   results.forEach(r=>zoneCounts[r.zone]=(zoneCounts[r.zone]||0)+1);
  
-  const sheet1=[['寢室','掃區','抽籤日期','抽籤時間'],...results.map(r=>[r.dorm,r.zone,dateStr,timeStr])];
+  // 從掃區名稱解析樓層（掃區格式為「X樓 xxx」或無樓層）
+  function parseFloor(zone){const m=zone.match(/^(\d+(\.\d+)?樓)/);return m?m[1]:'';}
+  const sheet1=[['樓層','掃區','寢室'],...results.map(r=>[parseFloor(r.zone),r.zone.replace(/^\d+(\.\d+)?樓\s*/,''),r.dorm])];
   const sheet2=[['掃區','分配間數'],...Object.entries(zoneCounts),['',''],['總寢室數',String(results.length)],['抽籤日期',dateStr],['抽籤時間',timeStr]];
  
   const bytes=buildXlsx([{name:'分配結果',rows:sheet1},{name:'統計摘要',rows:sheet2}]);
@@ -230,6 +290,25 @@ function activateExport(){
  
 function updateProgress(){document.getElementById('progress').textContent=drawn+' / '+total;}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+function confirmReset(){
+  document.getElementById('resetPwdInput').value='';
+  document.getElementById('resetPwdErr').textContent='';
+  document.getElementById('resetPwdBg').classList.add('open');
+  setTimeout(()=>document.getElementById('resetPwdInput').focus(),100);
+}
+function checkResetPwd(){
+  const val=document.getElementById('resetPwdInput').value;
+  if(val==='20090129sean'){
+    document.getElementById('resetPwdBg').classList.remove('open');
+    initApp();
+  } else {
+    const err=document.getElementById('resetPwdErr');
+    err.textContent='密碼錯誤，請再試一次';
+    document.getElementById('resetPwdInput').value='';
+    document.getElementById('resetPwdInput').focus();
+    setTimeout(()=>{err.textContent='';},2000);
+  }
+}
 function openModal(){
   document.getElementById('pwdInput').value='';
   document.getElementById('pwdErr').textContent='';
@@ -241,8 +320,8 @@ function checkPwd(){
   const val=document.getElementById('pwdInput').value;
   if(val==='20090129sean'){
     document.getElementById('pwdBg').classList.remove('open');
-    document.getElementById('dormsInput').value=ld('d_dorms',"301\n302\n303\n304\n305\n306");
-    document.getElementById('zonesInput').value=ld('d_zones',"廁所\n浴室\n走廊\n曬衣場");
+    document.getElementById('dormsInput').value=ld('d_dorms',"301\n302\n303\n304\n307\n308\n309\n310\n311\n312\n401\n402\n403\n404\n408");
+    document.getElementById('zonesInput').value=ld('d_zones',"垃圾\n垃圾\n2樓 洗衣場+晒衣場\n3樓 洗衣場+晒衣場\n4樓 洗衣場+晒衣場\n2樓 廁所\n3樓 廁所\n4樓 廁所\n2樓 浴室\n3樓 浴室\n4樓 浴室\n2樓 琉理台+走廊+飲水機\n3樓 琉理台+走廊+飲水機\n4樓 琉理台+走廊+飲水機\n2.4樓冰箱");
     document.getElementById('modalBg').classList.add('open');
   } else {
     const err=document.getElementById('pwdErr');
@@ -324,3 +403,4 @@ initApp();
 </script>
 </body>
 </html>
+ 
