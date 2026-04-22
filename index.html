@@ -1,171 +1,326 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>中興男宿掃區抽籤系統</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
-    <style>
-        :root { 
-            --primary-green: #2d6a4f; 
-            --light-green: #d8f3dc;   
-            --accent-green: #40916c;  
-            --success-bg: #b7e4c7;    
-            --text-color: #1b4332;
-        }
-        body { font-family: "PingFang TC", sans-serif; background: var(--light-green); display: flex; justify-content: center; padding: 20px; color: var(--text-color); }
-        .card { width: 100%; max-width: 600px; background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(27, 67, 50, 0.15); position: relative; }
-        
-        /* 齒輪 */
-        .settings-btn { position: absolute; top: 25px; right: 25px; font-size: 24px; cursor: pointer; color: #95d5b2; transition: 0.3s; }
-        .settings-btn:hover { transform: rotate(90deg); color: var(--primary-green); }
-
-        h2 { text-align: center; color: var(--primary-green); margin-bottom: 5px; }
-        .description { text-align: center; color: #74c69d; font-size: 14px; margin-bottom: 20px; }
-
-        /* 序號輸入區 */
-        .sync-container { 
-            background: #f0fdf4; border: 2px solid var(--accent-green); border-radius: 15px; 
-            padding: 15px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;
-        }
-        .sync-label { font-size: 14px; font-weight: bold; color: var(--primary-green); white-space: nowrap; }
-        .sync-input { 
-            flex-grow: 1; padding: 8px 12px; border: 1px solid #b7e4c7; border-radius: 8px; 
-            font-size: 16px; font-weight: bold; color: var(--primary-green); outline: none;
-        }
-        .sync-input:focus { border-color: var(--primary-green); background: #fff; }
-
-        /* 寢室格子 */
-        .dorm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; }
-        .dorm-box { 
-            background: #fff; border: 2px solid #e9ecef; border-radius: 16px; padding: 20px; 
-            text-align: center; transition: all 0.3s ease; cursor: pointer;
-        }
-        .dorm-box:hover { border-color: var(--accent-green); transform: translateY(-3px); }
-        .dorm-box.drawn { background: var(--success-bg); border-color: var(--accent-green); cursor: default; }
-        
-        .dorm-name { font-weight: bold; display: block; margin-bottom: 8px; font-size: 18px; }
-        .result-text { font-weight: 800; font-size: 16px; color: var(--primary-green); }
-
-        /* 彈窗 */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(27, 67, 50, 0.7); z-index: 100; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .modal-content { background: white; width: 90%; max-width: 400px; padding: 30px; border-radius: 20px; }
-        textarea { width: 100%; height: 120px; margin: 10px 0; padding: 12px; border: 2px solid #d8f3dc; border-radius: 12px; box-sizing: border-box; }
-        .save-btn { width: 100%; padding: 14px; background: var(--primary-green); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
-        .reset-btn { width: 100%; padding: 10px; background: #fff; color: #e74c3c; border: 1px solid #e74c3c; border-radius: 12px; cursor: pointer; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宿舍掃區分配抽籤</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f3ff;min-height:100vh;display:flex;justify-content:center;padding:32px 16px}
+.app-wrap{width:100%;max-width:680px}
+.app{padding:1.5rem;background:#fff;border-radius:20px;box-shadow:0 8px 32px #7F77DD18;position:relative;overflow:hidden}
+.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem}
+.title{font-size:20px;font-weight:500;color:#1a1a2e;margin:0 0 4px}
+.subtitle{font-size:13px;color:#888;margin:0}
+.progress-pill{background:#7F77DD22;border:0.5px solid #7F77DD88;border-radius:20px;padding:4px 12px;font-size:12px;color:#534AB7;font-weight:500;white-space:nowrap}
+.pool-wrap{background:#f8f7ff;border:0.5px solid #AFA9EC55;border-radius:16px;padding:14px 16px;margin-bottom:1.5rem;min-height:60px}
+.pool-label{font-size:11px;color:#aaa;letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px}
+.pool-tags{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.zone-tag{display:inline-flex;align-items:center;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid #AFA9EC;background:#EEEDFE;color:#3C3489;transition:opacity .25s,transform .25s,background .15s,border-color .15s,box-shadow .15s;white-space:nowrap}
+.zone-tag.used{opacity:0;transform:scale(0.6);pointer-events:none}
+.zone-tag.hl{background:#7F77DD;border-color:#534AB7;color:#fff;transform:scale(1.12);box-shadow:0 0 0 4px #AFA9EC55}
+.zone-tag.winner{background:#639922;border-color:#3B6D11;color:#fff;transform:scale(1.16);animation:pulse .35s ease infinite alternate}
+@keyframes pulse{to{box-shadow:0 0 0 6px #97C45944}}
+.pool-empty{font-size:13px;color:#aaa;font-style:italic}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px}
+.dbox{background:#fff;border:1px solid #e0ddf8;border-radius:14px;padding:18px 10px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s,transform .15s,box-shadow .15s;user-select:none;position:relative;overflow:hidden}
+.dbox:hover:not(.drawn):not(.locked){border-color:#AFA9EC;background:#EEEDFE08;transform:translateY(-2px);box-shadow:0 4px 16px #7F77DD18}
+.dbox.locked{cursor:default}
+.dbox.drawn{background:#EAF3DE;border-color:#97C459;cursor:default}
+.dbox.drawn::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,#C0DD9720 0%,transparent 60%);pointer-events:none}
+.dstatus{font-size:10px;color:#bbb;letter-spacing:.5px;margin-bottom:5px}
+.dbox.drawn .dstatus{color:#3B6D11}
+.dname{font-size:16px;font-weight:500;color:#1a1a2e;margin-bottom:6px}
+.dresult{font-size:13px;color:#888;min-height:20px;transition:transform .3s,opacity .3s}
+.dbox.drawn .dresult{color:#27500A;font-weight:500}
+.dbox.locked .dname{color:#7F77DD}
+.burst-canvas{position:absolute;inset:0;pointer-events:none}
+.actions{display:flex;gap:8px;margin-top:1.5rem;flex-wrap:wrap;align-items:center}
+.btn{font-size:13px;color:#666;background:none;border:0.5px solid #ddd;border-radius:8px;padding:7px 16px;cursor:pointer;transition:background .15s,opacity .15s}
+.btn:hover{background:#f5f3ff}
+.btn:disabled{opacity:.4;cursor:default}
+.btn-export{background:#27500A;color:#EAF3DE;border-color:#27500A;font-weight:500;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.btn-export:hover:not([disabled]){background:#3B6D11;border-color:#3B6D11}
+.btn-right{margin-left:auto}
+.toast{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);background:#27500A;color:#EAF3DE;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:500;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;z-index:9999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);align-items:center;justify-content:center;z-index:100}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:1.5rem;width:90%;max-width:340px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal h3{font-size:15px;font-weight:500;margin:0 0 1rem;color:#1a1a2e}
+.modal label{font-size:12px;color:#888;display:block;margin-bottom:4px}
+.modal textarea{width:100%;height:88px;margin-bottom:1rem;padding:8px;font-size:13px;border-radius:8px;border:0.5px solid #ddd;background:#f9f9f9;color:#1a1a2e;resize:vertical;outline:none;font-family:inherit}
+.modal textarea:focus{border-color:#7F77DD}
+.btn-save{width:100%;padding:10px;background:#639922;color:#EAF3DE;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500}
+.btn-save:hover{background:#3B6D11}
+</style>
 </head>
 <body>
-
-    <div class="card">
-        <div class="settings-btn" onclick="checkPassword()">⚙️</div>
-        <h2>🌿 掃區抽籤</h2>
-        <p class="description">輸入共同序號，所有人結果即同步</p>
-
-        <div class="sync-container">
-            <span class="sync-label">🔑 抽籤序號:</span>
-            <input type="text" id="mainSeed" class="sync-input" placeholder="例如: 0222" oninput="initApp()">
-        </div>
-        
-        <div id="dormGrid" class="dorm-grid"></div>
+<div class="app-wrap">
+<div class="app">
+  <div class="header">
+    <div>
+      <p class="title">宿舍掃區分配</p>
+      <p class="subtitle">點擊寢室，看看命運的選擇</p>
     </div>
-
-    <div id="settingsModal" class="modal">
-        <div class="modal-content">
-            <h3 style="margin-top:0; color: var(--primary-green);">⚙️ 管理名單</h3>
-            <label style="font-weight:bold; font-size:14px;">🛌 寢室清單 (每行一間)</label>
-            <textarea id="dormsInput"></textarea>
-            
-            <label style="font-weight:bold; font-size:14px;">🏛️ 公共掃區 (每行一區)</label>
-            <textarea id="zonesInput"></textarea>
-            
-            <button class="save-btn" onclick="saveAndRefresh()">儲存名單</button>
-            <button class="reset-btn" onclick="confirmReset()">🔄 重置所有格子</button>
-            <p style="text-align:center; font-size:12px; color:#999; margin-top:15px; cursor:pointer;" onclick="toggleModal()">關閉設定</p>
-        </div>
-    </div>
-
+    <span class="progress-pill" id="progress">0 / 0</span>
+  </div>
+  <div class="pool-wrap">
+    <div class="pool-label">剩餘掃區</div>
+    <div class="pool-tags" id="zonesPool"></div>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="actions">
+    <button class="btn" onclick="initApp()">重置</button>
+    <a id="exportBtn" class="btn btn-export" style="opacity:.4;pointer-events:none">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 10v2h10v-2M7 2v7M4 6l3 3 3-3" stroke="#EAF3DE" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      匯出 Excel
+    </a>
+    <button class="btn btn-right" onclick="openModal()">設定名單</button>
+  </div>
+</div>
+</div>
+ 
+<div id="toast" class="toast"></div>
+<div class="modal-bg" id="pwdBg" onclick="pwdBgClick(event)">
+  <div class="modal">
+    <h3>請輸入密碼</h3>
+    <input id="pwdInput" type="password" placeholder="密碼" style="width:100%;padding:9px 12px;font-size:14px;border-radius:8px;border:0.5px solid #ddd;background:#f9f9f9;color:#1a1a2e;outline:none;font-family:inherit;margin-bottom:8px" onkeydown="if(event.key==='Enter')checkPwd()">
+    <div id="pwdErr" style="font-size:12px;color:#E24B4A;min-height:18px;margin-bottom:8px"></div>
+    <button class="btn-save" onclick="checkPwd()">確認</button>
+  </div>
+</div>
+ 
+<div class="modal-bg" id="pwdBg" onclick="pwdBgClick(event)">
+  <div class="modal">
+    <h3>請輸入密碼</h3>
+    <input id="pwdInput" type="password" placeholder="密碼" style="width:100%;padding:9px 12px;font-size:14px;border-radius:8px;border:0.5px solid #ddd;background:#f9f9f9;color:#1a1a2e;outline:none;font-family:inherit;margin-bottom:8px" onkeydown="if(event.key==='Enter')checkPwd()">
+    <div id="pwdErr" style="font-size:12px;color:#E24B4A;min-height:18px;margin-bottom:8px"></div>
+    <button class="btn-save" onclick="checkPwd()">確認</button>
+  </div>
+</div>
+ 
+<div class="modal-bg" id="modalBg" onclick="bgClick(event)">
+  <div class="modal">
+    <h3>設定名單</h3>
+    <label>寢室清單（每行一個）</label>
+    <textarea id="dormsInput"></textarea>
+    <label>公共掃區（每行一個）</label>
+    <textarea id="zonesInput"></textarea>
+    <button class="btn-save" onclick="saveAndRefresh()">儲存並開啟新回合</button>
+  </div>
+</div>
+ 
 <script>
-    const ADMIN_PASSWORD = "312"; // 設定密碼
-    let assignments = {};
-
-    window.onload = function() {
-        if (!localStorage.getItem('dorm_list')) {
-            localStorage.setItem('dorm_list', "301\n302\n303\n304\n305");
-            localStorage.setItem('zone_list', "廁所\n浴室\n走廊");
-            document.getElementById('mainSeed').value = "123"; 
-        } else {
-            document.getElementById('mainSeed').value = localStorage.getItem('last_seed') || "123";
-        }
-        initApp();
-    };
-
-    function checkPassword() {
-        const pass = prompt("管理員密碼：");
-        if (pass === ADMIN_PASSWORD) toggleModal();
-    }
-
-    function toggleModal() {
-        document.getElementById('dormsInput').value = localStorage.getItem('dorm_list');
-        document.getElementById('zonesInput').value = localStorage.getItem('zone_list');
-        const modal = document.getElementById('settingsModal');
-        modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
-    }
-
-    function saveAndRefresh() {
-        localStorage.setItem('dorm_list', document.getElementById('dormsInput').value);
-        localStorage.setItem('zone_list', document.getElementById('zonesInput').value);
-        toggleModal();
-        initApp();
-    }
-
-    function confirmReset() {
-        if(confirm("確定要重置所有格子嗎？(這會蓋掉目前的抽籤畫面)")) {
-            initApp();
-            toggleModal();
-        }
-    }
-
-    function initApp() {
-        const dorms = localStorage.getItem('dorm_list').trim().split('\n').filter(d => d.trim() !== "");
-        const zones = localStorage.getItem('zone_list').trim().split('\n').filter(z => z.trim() !== "");
-        const seed = document.getElementById('mainSeed').value || "default";
-        localStorage.setItem('last_seed', seed);
-
-        // 鎖定隨機種子
-        Math.seedrandom(seed);
-
-        let pool = [...zones];
-        while (pool.length < dorms.length) pool.push("✨ 自主清潔");
-        pool = pool.slice(0, dorms.length);
-        
-        // 洗牌 (受 seed 影響)
-        for (let i = pool.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [pool[i], pool[j]] = [pool[j], pool[i]];
-        }
-
-        assignments = {};
-        dorms.forEach((dorm, index) => assignments[dorm] = pool[index]);
-
-        const grid = document.getElementById('dormGrid');
-        grid.innerHTML = "";
-        dorms.forEach(dorm => {
-            const box = document.createElement('div');
-            box.className = 'dorm-box';
-            box.id = `box-${dorm}`;
-            box.onclick = () => {
-                if(!box.classList.contains('drawn')) {
-                    box.classList.add('drawn');
-                    box.innerHTML = `<span class="dorm-name">${dorm}</span><div class="result-text">${assignments[dorm]}</div>`;
-                }
-            };
-            box.innerHTML = `<span class="dorm-name">${dorm}</span><div class="result-text">?</div>`;
-            grid.appendChild(box);
-        });
-    }
+let assignments={},drawn=0,total=0,busy=false,results=[];
+function ld(k,d){try{return localStorage.getItem(k)||d}catch{return d}}
+function sv(k,v){try{localStorage.setItem(k,v)}catch{}}
+ 
+function initApp(){
+  drawn=0;busy=false;results=[];
+  const btn=document.getElementById('exportBtn');
+  btn.style.opacity='.4';btn.style.pointerEvents='none';btn.removeAttribute('href');btn.removeAttribute('download');
+  const dorms=ld('d_dorms',"301\n302\n303\n304\n305\n306").trim().split('\n').filter(x=>x.trim());
+  const zones=ld('d_zones',"廁所\n浴室\n走廊\n曬衣場").trim().split('\n').filter(x=>x.trim());
+  total=dorms.length;
+  let pool=[...zones];
+  while(pool.length<dorms.length)pool.push("自主清潔");
+  pool=pool.slice(0,dorms.length);
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  assignments={};dorms.forEach((d,i)=>assignments[d]=pool[i]);
+  const pe=document.getElementById('zonesPool');pe.innerHTML='';
+  pool.forEach(z=>{const t=document.createElement('span');t.className='zone-tag';t.textContent=z;t.dataset.zone=z;pe.appendChild(t);});
+  const g=document.getElementById('grid');g.innerHTML='';
+  dorms.forEach(d=>{
+    const b=document.createElement('div');b.className='dbox';b.id='box-'+d;b.onclick=()=>reveal(d);
+    b.innerHTML=`<canvas class="burst-canvas" id="bc-${d}"></canvas><div class="dstatus" id="st-${d}">待抽取</div><div class="dname">${d}</div><div class="dresult" id="res-${d}">?</div>`;
+    g.appendChild(b);
+  });
+  updateProgress();
+}
+ 
+function getAvailTags(){return Array.from(document.querySelectorAll('#zonesPool .zone-tag:not(.used)'))}
+ 
+function reveal(dorm){
+  if(busy)return;
+  const box=document.getElementById('box-'+dorm);
+  if(!box||box.classList.contains('drawn')||box.classList.contains('locked'))return;
+  busy=true;box.classList.add('locked');
+  document.getElementById('st-'+dorm).textContent='命運轉動中';
+  document.getElementById('res-'+dorm).textContent='';
+  const zone=assignments[dorm];
+  const avail=getAvailTags();
+  if(!avail.length){finish(dorm,zone);return;}
+  const winnerTag=avail.find(t=>t.dataset.zone===zone)||avail[0];
+  const STEPS=22+Math.floor(Math.random()*8);
+  let steps=[];
+  for(let i=0;i<STEPS-avail.length;i++)steps.push(avail[Math.floor(Math.random()*avail.length)]);
+  const wi=avail.indexOf(winnerTag);
+  for(let i=0;i<avail.length;i++)steps.push(avail[(wi+i)%avail.length]);
+  const delays=steps.map((_,i)=>{const r=i/steps.length;return r<.35?55:r<.6?90:r<.78?145:r<.9?210:280;});
+  let cur=-1;
+  function step(i){
+    if(cur>=0&&steps[cur])steps[cur].classList.remove('hl','winner');
+    if(i>=steps.length){winnerTag.classList.add('winner');setTimeout(()=>flyToBox(dorm,zone,winnerTag),600);return;}
+    cur=i;steps[i].classList.add('hl');setTimeout(()=>step(i+1),delays[i]);
+  }
+  step(0);
+}
+ 
+function flyToBox(dorm,zone,tag){
+  tag.classList.remove('hl','winner');
+  const tr=tag.getBoundingClientRect();
+  const box=document.getElementById('box-'+dorm);
+  const br=box.getBoundingClientRect();
+  const fly=document.createElement('span');
+  fly.style.cssText=`position:fixed;z-index:9999;pointer-events:none;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;white-space:nowrap;background:#639922;border:1px solid #3B6D11;color:#EAF3DE;left:${tr.left}px;top:${tr.top}px;width:${tr.width}px;height:${tr.height}px;`;
+  fly.textContent=zone;document.body.appendChild(fly);tag.classList.add('used');
+  const dx=br.left+(br.width/2)-(tr.width/2),dy=br.top+(br.height/2)-(tr.height/2);
+  requestAnimationFrame(()=>{fly.style.transition='left .55s cubic-bezier(.4,0,.2,1),top .55s cubic-bezier(.4,0,.2,1),transform .55s,opacity .55s';fly.style.left=dx+'px';fly.style.top=dy+'px';fly.style.transform='scale(.78)';});
+  setTimeout(()=>{fly.style.opacity='0';setTimeout(()=>{fly.remove();finish(dorm,zone);},180);},560);
+}
+ 
+function finish(dorm,zone){
+  const box=document.getElementById('box-'+dorm);
+  const res=document.getElementById('res-'+dorm);
+  res.style.opacity='0';res.style.transform='translateY(6px)';res.textContent=zone;
+  document.getElementById('st-'+dorm).textContent='已確認';
+  box.classList.remove('locked');box.classList.add('drawn');
+  setTimeout(()=>{res.style.transition='opacity .3s,transform .3s';res.style.opacity='1';res.style.transform='translateY(0)';},20);
+  burst(dorm);results.push({dorm,zone});drawn++;busy=false;updateProgress();
+  if(drawn===total){
+    const p=document.getElementById('zonesPool');
+    if(!p.querySelector('.zone-tag:not(.used)'))p.innerHTML='<span class="pool-empty">全部分配完畢 ✓</span>';
+    activateExport();
+    showToast('全部抽完！可以匯出 Excel 了');
+  }
+}
+ 
+function burst(dorm){
+  const c=document.getElementById('bc-'+dorm);if(!c)return;
+  const box=document.getElementById('box-'+dorm);c.width=box.offsetWidth;c.height=box.offsetHeight;
+  const ctx=c.getContext('2d');
+  const colors=['#7F77DD','#639922','#EF9F27','#D4537E','#1D9E75','#378ADD'];
+  const particles=Array.from({length:22},()=>({x:c.width/2,y:c.height/2,vx:(Math.random()-.5)*6,vy:(Math.random()-.5)*6-2,r:Math.random()*3+1.5,color:colors[Math.floor(Math.random()*colors.length)],life:1}));
+  function draw(){ctx.clearRect(0,0,c.width,c.height);let alive=false;particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.18;p.life-=0.032;if(p.life<=0)return;alive=true;ctx.globalAlpha=p.life;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;if(alive)requestAnimationFrame(draw);}
+  draw();
+}
+ 
+function activateExport(){
+  const now=new Date();
+  const pad=n=>String(n).padStart(2,'0');
+  const dateStr=`${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())}`;
+  const timeStr=`${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const filename=`掃區分配_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}.xlsx`;
+ 
+  const zoneCounts={};
+  results.forEach(r=>zoneCounts[r.zone]=(zoneCounts[r.zone]||0)+1);
+ 
+  const sheet1=[['寢室','掃區','抽籤日期','抽籤時間'],...results.map(r=>[r.dorm,r.zone,dateStr,timeStr])];
+  const sheet2=[['掃區','分配間數'],...Object.entries(zoneCounts),['',''],['總寢室數',String(results.length)],['抽籤日期',dateStr],['抽籤時間',timeStr]];
+ 
+  const bytes=buildXlsx([{name:'分配結果',rows:sheet1},{name:'統計摘要',rows:sheet2}]);
+  const b64=bytesToBase64(bytes);
+ 
+  const btn=document.getElementById('exportBtn');
+  btn.href='data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,'+b64;
+  btn.download=filename;
+  btn.style.opacity='1';btn.style.pointerEvents='auto';
+}
+ 
+function updateProgress(){document.getElementById('progress').textContent=drawn+' / '+total;}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+function openModal(){
+  document.getElementById('pwdInput').value='';
+  document.getElementById('pwdErr').textContent='';
+  document.getElementById('pwdBg').classList.add('open');
+  setTimeout(()=>document.getElementById('pwdInput').focus(),100);
+}
+function pwdBgClick(e){if(e.target===document.getElementById('pwdBg'))document.getElementById('pwdBg').classList.remove('open');}
+function checkPwd(){
+  const val=document.getElementById('pwdInput').value;
+  if(val==='20090129sean'){
+    document.getElementById('pwdBg').classList.remove('open');
+    document.getElementById('dormsInput').value=ld('d_dorms',"301\n302\n303\n304\n305\n306");
+    document.getElementById('zonesInput').value=ld('d_zones',"廁所\n浴室\n走廊\n曬衣場");
+    document.getElementById('modalBg').classList.add('open');
+  } else {
+    const err=document.getElementById('pwdErr');
+    err.textContent='密碼錯誤，請再試一次';
+    document.getElementById('pwdInput').value='';
+    document.getElementById('pwdInput').focus();
+    setTimeout(()=>{err.textContent='';},2000);
+  }
+}
+function bgClick(e){if(e.target===document.getElementById('modalBg'))document.getElementById('modalBg').classList.remove('open');}
+function saveAndRefresh(){sv('d_dorms',document.getElementById('dormsInput').value);sv('d_zones',document.getElementById('zonesInput').value);document.getElementById('modalBg').classList.remove('open');initApp();}
+ 
+// ── Base64 encoder ────────────────────────────────────────────────
+function bytesToBase64(bytes){
+  const CHUNK=0x8000;let bin='';
+  for(let i=0;i<bytes.length;i+=CHUNK)bin+=String.fromCharCode(...bytes.subarray(i,i+CHUNK));
+  return btoa(bin);
+}
+ 
+// ── xlsx builder (no external deps) ──────────────────────────────
+function buildXlsx(sheets){
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  const sst=[];const sstMap={};
+  function si(s){const k=String(s);if(sstMap[k]===undefined){sstMap[k]=sst.length;sst.push(k);}return sstMap[k];}
+  sheets.forEach(sh=>sh.rows.forEach(row=>row.forEach(c=>{if(c!=null)si(c);})));
+  function col(n){let s='';n++;while(n>0){s=String.fromCharCode(65+(n-1)%26)+s;n=Math.floor((n-1)/26);}return s;}
+  const shXmls=sheets.map(sh=>{
+    const mc=Math.max(...sh.rows.map(r=>r.length));
+    let x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols>';
+    for(let c=0;c<mc;c++)x+=`<col min="${c+1}" max="${c+1}" width="18" customWidth="1"/>`;
+    x+='</cols><sheetData>';
+    sh.rows.forEach((row,ri)=>{
+      x+=`<row r="${ri+1}">`;
+      row.forEach((cell,ci)=>{const a=col(ci)+(ri+1);if(cell==null){x+=`<c r="${a}"/>`;return;}x+=`<c r="${a}" t="s"><v>${si(cell)}</v></c>`;});
+      x+='</row>';
+    });
+    x+='</sheetData></worksheet>';return x;
+  });
+  let sstXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${sst.length}" uniqueCount="${sst.length}">`;
+  sst.forEach(s=>{sstXml+=`<si><t xml:space="preserve">${esc(s)}</t></si>`;});sstXml+='</sst>';
+  let wbXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>';
+  sheets.forEach((sh,i)=>{wbXml+=`<sheet name="${esc(sh.name)}" sheetId="${i+1}" r:id="rId${i+2}"/>`;});wbXml+='</sheets></workbook>';
+  let wbRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>';
+  sheets.forEach((_,i)=>{wbRels+=`<Relationship Id="rId${i+2}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`;});wbRels+='</Relationships>';
+  let ct='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>';
+  sheets.forEach((_,i)=>{ct+=`<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`;});ct+='</Types>';
+  const topRels='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+  const files={'[Content_Types].xml':ct,'_rels/.rels':topRels,'xl/workbook.xml':wbXml,'xl/_rels/workbook.xml.rels':wbRels,'xl/sharedStrings.xml':sstXml};
+  sheets.forEach((sh,i)=>{files[`xl/worksheets/sheet${i+1}.xml`]=shXmls[i];});
+  return buildZip(files);
+}
+ 
+function buildZip(files){
+  const enc=new TextEncoder();
+  function u16(n){return[n&0xff,(n>>8)&0xff];}
+  function u32(n){return[n&0xff,(n>>8)&0xff,(n>>16)&0xff,(n>>24)&0xff];}
+  function crc32(d){let c=0xFFFFFFFF;const t=[];for(let i=0;i<256;i++){let n=i;for(let j=0;j<8;j++)n=n&1?0xEDB88320^(n>>>1):n>>>1;t[i]=n;}for(let i=0;i<d.length;i++)c=t[(c^d[i])&0xFF]^(c>>>8);return(c^0xFFFFFFFF)>>>0;}
+  const parts=[];const cds=[];let offset=0;
+  Object.entries(files).forEach(([name,content])=>{
+    const nb=enc.encode(name),db=enc.encode(content),crc=crc32(db),sz=db.length;
+    const lh=new Uint8Array([0x50,0x4B,0x03,0x04,20,0,0,0,0,0,0,0,0,0,...u32(crc),...u32(sz),...u32(sz),...u16(nb.length),...u16(0)]);
+    parts.push(lh);parts.push(nb);parts.push(db);
+    cds.push({nb,crc,sz,offset});offset+=lh.length+nb.length+sz;
+  });
+  const cdStart=offset;
+  cds.forEach(({nb,crc,sz,offset:lo})=>{
+    const cd=new Uint8Array([0x50,0x4B,0x01,0x02,20,0,20,0,0,0,0,0,0,0,0,0,...u32(crc),...u32(sz),...u32(sz),...u16(nb.length),...u16(0),...u16(0),...u16(0),...u16(0),...u32(0),...u32(lo)]);
+    parts.push(cd);parts.push(nb);offset+=cd.length+nb.length;
+  });
+  const cdSz=offset-cdStart;
+  parts.push(new Uint8Array([0x50,0x4B,0x05,0x06,0,0,0,0,...u16(cds.length),...u16(cds.length),...u32(cdSz),...u32(cdStart),0,0]));
+  const total=parts.reduce((s,p)=>s+p.length,0);
+  const out=new Uint8Array(total);let pos=0;
+  parts.forEach(p=>{out.set(p,pos);pos+=p.length;});
+  return out;
+}
+ 
+initApp();
 </script>
-
 </body>
 </html>
-
