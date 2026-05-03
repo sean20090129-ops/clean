@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中興男宿掃區分配抽籤</title>
+<title>宿舍掃區分配抽籤</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f3ff;min-height:100vh;display:flex;justify-content:center;padding:32px 16px}
@@ -272,18 +272,25 @@ function activateExport(){
   // 從掃區名稱解析樓層
   function parseFloor(zone){const m=zone.match(/^(\d+(\.\d+)?樓)/);return m?m[1]:'';}
   function parseZoneName(zone){return zone.replace(/^\d+(\.\d+)?樓\s*/,'');}
-  // 排序：先按掃區名稱分組，同掃區內按樓層排
-  const floorOrder={'2樓':1,'3樓':2,'4樓':3,'2.4樓':4,'':5};
+  // 固定排序對照 xlsx 格式
   const zoneOrder=['垃圾','洗衣場+晒衣場','廁所','浴室','琉理台+走廊+飲水機','2.4樓冰箱'];
+  const floorOrder={'2樓':1,'3樓':2,'4樓':3,'':9};
   const sorted=[...results].sort((a,b)=>{
     const za=parseZoneName(a.zone),zb=parseZoneName(b.zone);
-    const zi=zoneOrder.indexOf(za),zj=zoneOrder.indexOf(zb);
-    const zo=(zi===-1?99:zi)-(zj===-1?99:zj);
+    const zo=(zoneOrder.indexOf(za)||99)-(zoneOrder.indexOf(zb)||99);
     if(zo!==0)return zo;
-    const fa=parseFloor(a.zone),fb=parseFloor(b.zone);
-    return (floorOrder[fa]||9)-(floorOrder[fb]||9);
+    return (floorOrder[parseFloor(a.zone)]||9)-(floorOrder[parseFloor(b.zone)]||9);
   });
-  const sheet1=[['樓層','掃區','寢室'],...sorted.map(r=>[parseFloor(r.zone),parseZoneName(r.zone),r.dorm])];
+  // 格式對照：垃圾/冰箱無樓層欄，其他有樓層欄
+  const noFloorZones=['垃圾','2.4樓冰箱'];
+  const sheet1=[['樓層','男宿掃地區域表',''],['','',''],
+    ...sorted.map(r=>{
+      const zn=parseZoneName(r.zone);
+      const fl=parseFloor(r.zone);
+      const hasFloor=!noFloorZones.includes(zn);
+      return [hasFloor?fl:'', zn, String(r.dorm)];
+    })
+  ];
   const sheet2=[['掃區','分配間數'],...Object.entries(zoneCounts),['',''],['總寢室數',String(results.length)],['抽籤日期',dateStr],['抽籤時間',timeStr]];
  
   const bytes=buildXlsx([{name:'分配結果',rows:sheet1},{name:'統計摘要',rows:sheet2}]);
