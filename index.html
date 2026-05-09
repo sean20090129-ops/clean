@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>掃區抽籤</title>
+<title>中興男宿掃區抽籤</title>
 <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Caveat:wght@500;700&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -391,16 +391,6 @@ body{
 </div>
 <div id="toast" class="toast"></div>
  
-<!-- reset pwd -->
-<div class="modal-bg" id="resetPwdBg" onclick="if(event.target===this)this.classList.remove('open')">
-  <div class="modal">
-    <h3>確認重置？</h3>
-    <p style="font-family:'Caveat',cursive;font-size:13px;color:var(--ink-dim);margin-bottom:12px">輸入密碼才能重置喔</p>
-    <input id="resetPwdInput" type="password" placeholder="密碼" onkeydown="if(event.key==='Enter')checkResetPwd()">
-    <div id="resetPwdErr" class="pwd-err"></div>
-    <button class="btn-save" onclick="checkResetPwd()">確認重置</button>
-  </div>
-</div>
 <!-- settings pwd -->
 <div class="modal-bg" id="pwdBg" onclick="pwdBgClick(event)">
   <div class="modal">
@@ -655,8 +645,6 @@ function activateExport(){
 }
  
 /* ── pwd/modal ── */
-function confirmReset(){resumeAC();document.getElementById('resetPwdInput').value='';document.getElementById('resetPwdErr').textContent='';document.getElementById('resetPwdBg').classList.add('open');setTimeout(()=>document.getElementById('resetPwdInput').focus(),100);}
-function checkResetPwd(){if(document.getElementById('resetPwdInput').value==='20090129sean'){document.getElementById('resetPwdBg').classList.remove('open');initApp();showToast('已重置！');}else{const e=document.getElementById('resetPwdErr');e.textContent='❌ 密碼錯了啦！';document.getElementById('resetPwdInput').value='';document.getElementById('resetPwdInput').focus();vib([100,50,100]);setTimeout(()=>e.textContent='',2000);}}
 function openModal(){resumeAC();document.getElementById('pwdInput').value='';document.getElementById('pwdErr').textContent='';document.getElementById('pwdBg').classList.add('open');setTimeout(()=>document.getElementById('pwdInput').focus(),100);}
 function pwdBgClick(e){if(e.target===document.getElementById('pwdBg'))document.getElementById('pwdBg').classList.remove('open');}
 function checkPwd(){if(document.getElementById('pwdInput').value==='20090129sean'){document.getElementById('pwdBg').classList.remove('open');document.getElementById('dormsInput').value=ld('d_dorms',"301\n302\n303\n304\n307\n308\n309\n310\n311\n312\n401\n402\n403\n404\n408");document.getElementById('zonesInput').value=ld('d_zones',"垃圾\n垃圾\n2樓 洗衣場+晒衣場\n3樓 洗衣場+晒衣場\n4樓 洗衣場+晒衣場\n2樓 廁所\n3樓 廁所\n4樓 廁所\n2樓 浴室\n3樓 浴室\n4樓 浴室\n2樓 琉理台+走廊+飲水機\n3樓 琉理台+走廊+飲水機\n4樓 琉理台+走廊+飲水機\n2.4樓冰箱");document.getElementById('modalBg').classList.add('open');}else{const e=document.getElementById('pwdErr');e.textContent='❌ 密碼錯了啦！';document.getElementById('pwdInput').value='';document.getElementById('pwdInput').focus();vib([100,50,100]);setTimeout(()=>e.textContent='',2000);}}
