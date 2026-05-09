@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>掃區抽籤</title>
+<title>中興男宿掃區抽籤</title>
 <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&family=Caveat:wght@500;700&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -380,7 +380,7 @@ body{
     <div class="reveal-dorm-label">寢室號碼</div>
     <div class="reveal-dorm" id="revDorm">301</div>
     <div class="reveal-arrow">↓</div>
-    <div class="reveal-zone" id="revZone">垃圾</div>
+    <div class="reveal-zone" id="revZone">可憐!垃圾</div>
     <button class="reveal-close" onclick="closeReveal()">好喔！確認 ✓</button>
   </div>
 </div>
@@ -454,10 +454,10 @@ function initApp(){
   btn.style.opacity='.4';btn.style.pointerEvents='none';btn.removeAttribute('href');btn.removeAttribute('download');
  
   const dorms=ld('d_dorms',"301\n302\n303\n304\n307\n308\n309\n310\n311\n312\n401\n402\n403\n404\n408").trim().split('\n').filter(x=>x.trim());
-  const zones=ld('d_zones',"垃圾\n垃圾\n2樓 洗衣場+晒衣場\n3樓 洗衣場+晒衣場\n4樓 洗衣場+晒衣場\n2樓 廁所\n3樓 廁所\n4樓 廁所\n2樓 浴室\n3樓 浴室\n4樓 浴室\n2樓 琉理台+走廊+飲水機\n3樓 琉理台+走廊+飲水機\n4樓 琉理台+走廊+飲水機\n2.4樓冰箱").trim().split('\n').filter(x=>x.trim());
+  const zones=ld('d_zones',"倒垃圾\n倒垃圾\n2樓 洗衣場+晒衣場\n3樓 洗衣場+晒衣場\n4樓 洗衣場+晒衣場\n2樓 廁所\n3樓 廁所\n4樓 廁所\n2樓 浴室\n3樓 浴室\n4樓 浴室\n2樓 琉理台+走廊+飲水機\n3樓 琉理台+走廊+飲水機\n4樓 琉理台+走廊+飲水機\n2.4樓冰箱").trim().split('\n').filter(x=>x.trim());
   total=dorms.length;
   let pool=[...zones];
-  while(pool.length<dorms.length)pool.push('自主清潔');
+  while(pool.length<dorms.length)pool.push('沒有東西啊!');
   pool=pool.slice(0,dorms.length);
   for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
   remainingPool=[...pool];
