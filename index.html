@@ -454,7 +454,7 @@ function initApp(){
   btn.style.opacity='.4';btn.style.pointerEvents='none';btn.removeAttribute('href');btn.removeAttribute('download');
  
   const dorms=ld('d_dorms',"301\n302\n303\n304\n307\n308\n309\n310\n311\n312\n401\n402\n403\n404\n408").trim().split('\n').filter(x=>x.trim());
-  const zones=ld('d_zones',"倒垃圾\n倒垃圾\n2樓 洗衣場+晒衣場\n3樓 洗衣場+晒衣場\n4樓 洗衣場+晒衣場\n2樓 廁所\n3樓 廁所\n4樓 廁所\n2樓 浴室\n3樓 浴室\n4樓 浴室\n2樓 琉理台+走廊+飲水機\n3樓 琉理台+走廊+飲水機\n4樓 琉理台+走廊+飲水機\n2.4樓冰箱").trim().split('\n').filter(x=>x.trim());
+  const zones=ld('d_zones',"垃圾\n垃圾\n2樓 洗衣場+晒衣場\n3樓 洗衣場+晒衣場\n4樓 洗衣場+晒衣場\n2樓 廁所\n3樓 廁所\n4樓 廁所\n2樓 浴室\n3樓 浴室\n4樓 浴室\n2樓 琉理台+走廊+飲水機\n3樓 琉理台+走廊+飲水機\n4樓 琉理台+走廊+飲水機\n2.4樓冰箱").trim().split('\n').filter(x=>x.trim());
   total=dorms.length;
   let pool=[...zones];
   while(pool.length<dorms.length)pool.push('沒有東西啊!');
