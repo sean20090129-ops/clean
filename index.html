@@ -186,6 +186,9 @@ body{
   </div>
   <div class="door-grid" id="grid"></div>
   <div class="actions-tape">
+    <a id="exportExcel" class="btn btn-export" style="opacity:.4;pointer-events:none">
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 10v2h10v-2M7 2v7M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      匯出 Excel
     </a>
     <button id="exportDocxBtn" class="btn btn-export-docx" style="opacity:.4;pointer-events:none" onclick="exportDocx()">
       <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 10v2h10v-2M7 2v7M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -421,7 +424,7 @@ function finish(dorm,zone){
     const pe=document.getElementById('zonesPool');
     const remaining=pe.querySelectorAll('.zone-tag:not(.used):not(.clone)');
     if(!remaining.length)pe.innerHTML='<span class="pool-empty">✓ 全部分配完畢！</span>';
-    activateExport();showToast('全部抽完了！可以匯出 Word 囉 🎉');
+    activateExport();showToast('全部抽完了！可以匯出 Excel / Word 囉 🎉');
   }
 }
 
@@ -436,7 +439,6 @@ function burst(dorm){
 
 function updateProgress(){document.getElementById('progress').textContent=drawn+'/'+total;}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
-
 
 /* ── DOCX Export ── */
 async function exportDocx(){
@@ -513,6 +515,14 @@ async function exportDocx(){
     showToast('匯出失敗：' + e.message);
   }
 }
+
+/* ── pwd/modal ── */
+function openModal(){resumeAC();document.getElementById('pwdInput').value='';document.getElementById('pwdErr').textContent='';document.getElementById('pwdBg').classList.add('open');setTimeout(()=>document.getElementById('pwdInput').focus(),100);}
+function pwdBgClick(e){if(e.target===document.getElementById('pwdBg'))document.getElementById('pwdBg').classList.remove('open');}
+function checkPwd(){if(document.getElementById('pwdInput').value==='20090129sean'){document.getElementById('pwdBg').classList.remove('open');document.getElementById('dormsInput').value=ld('d_dorms',"301\n302\n303\n304\n307\n308\n309\n310\n311\n312\n401\n402\n403\n404\n408");document.getElementById('zonesInput').value=ld('d_zones',"垃圾\n垃圾\n2樓 洗衣場+晒衣場\n3樓 洗衣場+晒衣場\n4樓 洗衣場+晒衣場\n2樓 廁所\n3樓 廁所\n4樓 廁所\n2樓 浴室\n3樓 浴室\n4樓 浴室\n2樓 琉理台+走廊+飲水機\n3樓 琉理台+走廊+飲水機\n4樓 琉理台+走廊+飲水機\n2.4樓冰箱");document.getElementById('modalBg').classList.add('open');}else{const e=document.getElementById('pwdErr');e.textContent='❌ 密碼錯了啦！';document.getElementById('pwdInput').value='';document.getElementById('pwdInput').focus();vib([100,50,100]);setTimeout(()=>e.textContent='',2000);}}
+function bgClick(e){if(e.target===document.getElementById('modalBg'))document.getElementById('modalBg').classList.remove('open');}
+function saveAndRefresh(){sv('d_dorms',document.getElementById('dormsInput').value);sv('d_zones',document.getElementById('zonesInput').value);document.getElementById('modalBg').classList.remove('open');initApp();}
+
 /* ── xlsx/zip ── */
 function bytesToBase64(b){const C=0x8000;let s='';for(let i=0;i<b.length;i+=C)s+=String.fromCharCode(...b.subarray(i,i+C));return btoa(s);}
 function buildXlsx(sheets){
