@@ -441,10 +441,12 @@ function updateProgress(){document.getElementById('progress').textContent=drawn+
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
 
 /* ── DOCX Export ── */
+/* ── DOCX Export ── */
 async function exportDocx(){
   if(!results.length)return;
   showToast('正在產生 Word 文件...');
   try {
+    // Load template docx via JSZip
     const binary = atob(DOCX_TEMPLATE_B64);
     const bytes = new Uint8Array(binary.length);
     for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
@@ -452,12 +454,15 @@ async function exportDocx(){
     const zip = await JSZip.loadAsync(bytes);
     let xml = await zip.file('word/document.xml').async('string');
 
+    // Build a map: zone_key -> [dorm1, dorm2, ...] from results
     const zoneMap = {};
     results.forEach(r => {
       if(!zoneMap[r.zone]) zoneMap[r.zone]=[];
       zoneMap[r.zone].push(r.dorm);
     });
 
+    // For each docx row (0-14), find the matching dorm from results
+    // Use pointers to consume dorms in order for duplicate zones (垃圾 has 2)
     const zonePointers = {};
     const newDorms = DOCX_ROW_ZONE_KEYS.map(zoneKey => {
       const dorms = zoneMap[zoneKey];
@@ -467,50 +472,28 @@ async function exportDocx(){
       return dorms[ptr] || '—';
     });
 
+    // Replace dorm cells in XML
+    // Strategy: find the 15 data rows' last cell <w:t> content
+    // We'll use a regex to find table rows after the header rows and replace
+    // Parse XML properly to replace the correct text nodes
     const parser = new DOMParser();
     const doc = parser.parseFromString(xml, 'application/xml');
     const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 
     const tbl = doc.getElementsByTagNameNS(W, 'tbl')[0];
     const rows = tbl.getElementsByTagNameNS(W, 'tr');
-
-    for(let i = 0; i < 15; i++){
+    // rows 2-16 (0-indexed) are data rows
+    for(let i=0; i<15; i++){
       const row = rows[i+2];
       if(!row) continue;
       const cells = row.getElementsByTagNameNS(W, 'tc');
       const lastCell = cells[cells.length-1];
-
-      // 找所有 <w:r> run 節點
-      const runsLive = lastCell.getElementsByTagNameNS(W, 'r');
-      const runs = Array.from(runsLive); // 轉成靜態陣列，避免 live collection 問題
-
-      if(runs.length === 0){
-        // 沒有 run，建一個
-        const p = lastCell.getElementsByTagNameNS(W, 'p')[0];
-        const newRun = doc.createElementNS(W, 'w:r');
-        const newT = doc.createElementNS(W, 'w:t');
-        newT.textContent = newDorms[i];
-        newRun.appendChild(newT);
-        p.appendChild(newRun);
-        continue;
-      }
-
-      // 保留第一個 run，設定文字
-      const firstRun = runs[0];
-      const firstT = firstRun.getElementsByTagNameNS(W, 't')[0];
-      if(firstT){
-        firstT.textContent = newDorms[i];
-        // 如果值有空白需保留，加上 xml:space="preserve"
-        if(newDorms[i].includes(' ')){
-          firstT.setAttribute('xml:space', 'preserve');
-        } else {
-          firstT.removeAttribute('xml:space');
-        }
-      }
-
-      // 移除多餘的 run（從後往前，避免 index 錯位）
-      for(let j = runs.length - 1; j >= 1; j--){
-        runs[j].parentNode.removeChild(runs[j]);
+      const tNodes = lastCell.getElementsByTagNameNS(W, 't');
+      if(tNodes.length > 0){
+        // Clear all t nodes, set first one to new dorm
+        for(let j=1; j<tNodes.length; j++) tNodes[j].textContent='';
+        tNodes[0].textContent = newDorms[i];
+        tNodes[0].removeAttribute('xml:space');
       }
     }
 
@@ -519,23 +502,21 @@ async function exportDocx(){
     zip.file('word/document.xml', newXml);
 
     const now = new Date();
-    const pad = n => String(n).padStart(2, '0');
+    const pad = n=>String(n).padStart(2,'0');
     const filename = `掃區分配_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}.docx`;
 
-    const blob = await zip.generateAsync({
-      type: 'blob',
-      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    });
+    const blob = await zip.generateAsync({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = filename; a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    setTimeout(()=>URL.revokeObjectURL(url), 3000);
     showToast('Word 文件已下載！✓');
   } catch(e) {
     console.error(e);
     showToast('匯出失敗：' + e.message);
   }
 }
+
 /* ── Excel Export ── */
 function activateExport(){
   const now=new Date();const pad=n=>String(n).padStart(2,'0');
