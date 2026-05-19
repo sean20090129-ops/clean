@@ -186,9 +186,6 @@ body{
   </div>
   <div class="door-grid" id="grid"></div>
   <div class="actions-tape">
-    <a id="exportExcel" class="btn btn-export" style="opacity:.4;pointer-events:none">
-      <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 10v2h10v-2M7 2v7M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      匯出 Excel
     </a>
     <button id="exportDocxBtn" class="btn btn-export-docx" style="opacity:.4;pointer-events:none" onclick="exportDocx()">
       <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 10v2h10v-2M7 2v7M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -424,7 +421,7 @@ function finish(dorm,zone){
     const pe=document.getElementById('zonesPool');
     const remaining=pe.querySelectorAll('.zone-tag:not(.used):not(.clone)');
     if(!remaining.length)pe.innerHTML='<span class="pool-empty">✓ 全部分配完畢！</span>';
-    activateExport();showToast('全部抽完了！可以匯出 Excel / Word 囉 🎉');
+    activateExport();showToast('全部抽完了！可以匯出 Word 囉 🎉');
   }
 }
 
@@ -440,7 +437,7 @@ function burst(dorm){
 function updateProgress(){document.getElementById('progress').textContent=drawn+'/'+total;}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
 
-/* ── DOCX Export ── */
+
 /* ── DOCX Export ── */
 async function exportDocx(){
   if(!results.length)return;
@@ -516,39 +513,6 @@ async function exportDocx(){
     showToast('匯出失敗：' + e.message);
   }
 }
-
-/* ── Excel Export ── */
-function activateExport(){
-  const now=new Date();const pad=n=>String(n).padStart(2,'0');
-  const dateStr=`${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())}`;
-  const timeStr=`${pad(now.getHours())}:${pad(now.getMinutes())}`;
-  const filename=`掃區分配_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}.xlsx`;
-  const zoneCounts={};results.forEach(r=>zoneCounts[r.zone]=(zoneCounts[r.zone]||0)+1);
-  function pF(z){const m=z.match(/^(\d+(\.\d+)?樓)/);return m?m[1]:'';}
-  function pN(z){return z.replace(/^\d+(\.\d+)?樓\s*/,'');}
-  const zO=['垃圾','洗衣場+晒衣場','廁所','浴室','琉理台+走廊+飲水機','2.4樓冰箱'];
-  const fO={'2樓':1,'3樓':2,'4樓':3,'':9};
-  const sorted=[...results].sort((a,b)=>{const za=pN(a.zone),zb=pN(b.zone);const zo=(zO.indexOf(za)||99)-(zO.indexOf(zb)||99);if(zo!==0)return zo;return(fO[pF(a.zone)]||9)-(fO[pF(b.zone)]||9);});
-  const nF=['垃圾','2.4樓冰箱'];
-  const s1=[['樓層','男宿掃地區域表',''],...sorted.map(r=>{const zn=pN(r.zone),fl=pF(r.zone);return[nF.includes(zn)?'':fl,zn,String(r.dorm)];})];
-  const s2=[['掃區','分配間數'],...Object.entries(zoneCounts),['',''],['總寢室數',String(results.length)],['抽籤日期',dateStr],['抽籤時間',timeStr]];
-  const bytes=buildXlsx([{name:'分配結果',rows:s1},{name:'統計摘要',rows:s2}]);
-  const b64=bytesToBase64(bytes);
-  const btn=document.getElementById('exportExcel');
-  btn.href='data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,'+b64;
-  btn.download=filename;btn.style.opacity='1';btn.style.pointerEvents='auto';
-  // Also enable docx button
-  document.getElementById('exportDocxBtn').style.opacity='1';
-  document.getElementById('exportDocxBtn').style.pointerEvents='auto';
-}
-
-/* ── pwd/modal ── */
-function openModal(){resumeAC();document.getElementById('pwdInput').value='';document.getElementById('pwdErr').textContent='';document.getElementById('pwdBg').classList.add('open');setTimeout(()=>document.getElementById('pwdInput').focus(),100);}
-function pwdBgClick(e){if(e.target===document.getElementById('pwdBg'))document.getElementById('pwdBg').classList.remove('open');}
-function checkPwd(){if(document.getElementById('pwdInput').value==='20090129sean'){document.getElementById('pwdBg').classList.remove('open');document.getElementById('dormsInput').value=ld('d_dorms',"301\n302\n303\n304\n307\n308\n309\n310\n311\n312\n401\n402\n403\n404\n408");document.getElementById('zonesInput').value=ld('d_zones',"垃圾\n垃圾\n2樓 洗衣場+晒衣場\n3樓 洗衣場+晒衣場\n4樓 洗衣場+晒衣場\n2樓 廁所\n3樓 廁所\n4樓 廁所\n2樓 浴室\n3樓 浴室\n4樓 浴室\n2樓 琉理台+走廊+飲水機\n3樓 琉理台+走廊+飲水機\n4樓 琉理台+走廊+飲水機\n2.4樓冰箱");document.getElementById('modalBg').classList.add('open');}else{const e=document.getElementById('pwdErr');e.textContent='❌ 密碼錯了啦！';document.getElementById('pwdInput').value='';document.getElementById('pwdInput').focus();vib([100,50,100]);setTimeout(()=>e.textContent='',2000);}}
-function bgClick(e){if(e.target===document.getElementById('modalBg'))document.getElementById('modalBg').classList.remove('open');}
-function saveAndRefresh(){sv('d_dorms',document.getElementById('dormsInput').value);sv('d_zones',document.getElementById('zonesInput').value);document.getElementById('modalBg').classList.remove('open');initApp();}
-
 /* ── xlsx/zip ── */
 function bytesToBase64(b){const C=0x8000;let s='';for(let i=0;i<b.length;i+=C)s+=String.fromCharCode(...b.subarray(i,i+C));return btoa(s);}
 function buildXlsx(sheets){
